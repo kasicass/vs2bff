@@ -5,11 +5,8 @@
 // --help, print usage
 
 #include "BffCommon.hpp"
-#include <zmq.h>
-#include <stdlib.h>
-#include <string>
 
-#define LOG_BUFSIZE 1024
+#define LOG_BUFSIZE (1024*1024)
 
 static std::wstring g_logfilename;
 static bool g_outputToDbgview = false;

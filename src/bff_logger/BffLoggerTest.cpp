@@ -1,6 +1,4 @@
 #include "BffCommon.hpp"
-#include <zmq.h>
-#include <assert.h>
 
 int main()
 {
