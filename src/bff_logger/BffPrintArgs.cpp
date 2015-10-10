@@ -21,6 +21,15 @@ std::wstring readFile(const std::wstring& filename)
 	return text;
 }
 
+std::wstring getCurrDir()
+{
+	DWORD n = GetCurrentDirectory(0, NULL);
+	std::wstring path;
+	path.resize(n-1);
+	GetCurrentDirectory(n, (wchar_t*)path.c_str());
+	return path;
+}
+
 int wmain(int argc, wchar_t *argv[])
 {
 	void *context = zmq_ctx_new();
@@ -28,6 +37,7 @@ int wmain(int argc, wchar_t *argv[])
 	zmq_connect(logger, BFF_LOGGER_ADDRESS);
 
 	std::wstringstream output;
+	output << L"PWD:" << getCurrDir() << L"\n";
 
 	for (int i = 0; i < argc; ++i)
 	{
