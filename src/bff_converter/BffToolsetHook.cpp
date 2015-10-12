@@ -32,9 +32,12 @@ std::wstring getCurrDir()
 
 int wmain(int argc, wchar_t *argv[])
 {
+	const char *address = getenv("VSBFF_CONVERTER_ADDRESS");
+	if (!address) address = VSBFF_CONVERTER_ADDRESS;
+
 	void *context = zmq_ctx_new();
 	void *logger = zmq_socket(context, ZMQ_PUSH);
-	zmq_connect(logger, BFF_CONVERTER_ADDRESS);
+	zmq_connect(logger, address);
 
 	std::wstringstream output;
 	output << L"PWD:" << getCurrDir() << L"\n";

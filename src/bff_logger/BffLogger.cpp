@@ -76,7 +76,7 @@ int wmain(int argc, wchar_t *argv[])
 
 	void *context = zmq_ctx_new();
 	void *logger = zmq_socket(context, ZMQ_PULL);
-	zmq_bind(logger, BFF_LOGGER_ADDRESS);
+	zmq_bind(logger, VSBFF_LOGGER_ADDRESS);
 
 	void *out = zmq_socket(context, ZMQ_PUSH);
 	zmq_bind(out, "inproc://write-to-file");

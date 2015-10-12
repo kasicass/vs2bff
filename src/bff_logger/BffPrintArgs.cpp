@@ -34,7 +34,7 @@ int wmain(int argc, wchar_t *argv[])
 {
 	void *context = zmq_ctx_new();
 	void *logger = zmq_socket(context, ZMQ_PUSH);
-	zmq_connect(logger, BFF_LOGGER_ADDRESS);
+	zmq_connect(logger, VSBFF_LOGGER_ADDRESS);
 
 	std::wstringstream output;
 	output << L"PWD:" << getCurrDir() << L"\n";
