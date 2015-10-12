@@ -4,6 +4,7 @@ int main()
 {
 	void *context = zmq_ctx_new();
 	void *logger = zmq_socket(context, ZMQ_PUSH);
+	//zmq_connect(logger, BFF_CONVERTER_ADDRESS);
 	zmq_connect(logger, BFF_LOGGER_ADDRESS);
 
 	const wchar_t *text = L"[bff] Hello Boy!\n";

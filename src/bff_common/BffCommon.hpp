@@ -4,8 +4,11 @@
 #pragma once
 
 #define BFF_LOGGER_ADDRESS "tcp://127.0.0.1:5559"
+#define BFF_CONVERTER_ADDRESS "tcp://127.0.0.1:5558"
 
 #include "OS/Thread.hpp"
+
+#include "Parser/Tokenizer.hpp"
 
 // system include
 #include <zmq.h>
