@@ -13,7 +13,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{263ABB51-41FC-4BDF-A1AF-5117FE3B7253}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>bff_convertor</RootNamespace>
+    <RootNamespace>bff_converter</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
