@@ -20,14 +20,13 @@ int wmain(int argc, wchar_t *argv[])
 		if (n == -1)
 			break;
 
-		wprintf(L"\n-----\n");
 		std::wstring s((wchar_t*)buf, n/2);
 		VSBFF::Parser::Tokenizer t(s);
 
-		for (unsigned int i = 0; i < t.count(); ++i)
-		{
-			wprintf((t[i] + L"\n").c_str());
-		}
+		if (t.count() == 1 && t[0] == L"end")
+			break;
+
+
 	}
 	free(buf);
 
