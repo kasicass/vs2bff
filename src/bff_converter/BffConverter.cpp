@@ -1,6 +1,29 @@
 #include "BffCommon.hpp"
 
+using namespace VSBFF;
+
 #define CONV_BUFSIZE (1024*1024)
+
+std::wstring recvOneMsg(void *s)
+{
+	std::wstring ret;
+
+	zmq_msg_t msg;
+	zmq_msg_init(&msg);
+	zmq_msg_recv(&msg, s, 0);
+	ret.assign((wchar_t*)zmq_msg_data(&msg), zmq_msg_size(&msg)/2);
+	zmq_msg_close(&msg);
+
+	return ret;
+}
+
+void handleStart(const Parser::Tokenizer &t, void *conv)
+{
+	std::wstring platform = recvOneMsg(conv);
+	std::wstring vsInstallDir = recvOneMsg(conv);
+	Parser::Compiler c(platform, vsInstallDir);
+	wprintf(c.getString().c_str());
+}
 
 int wmain(int argc, wchar_t *argv[])
 {
@@ -26,7 +49,7 @@ int wmain(int argc, wchar_t *argv[])
 		if (t.count() == 1 && t[0] == L"end")
 			break;
 
-
+		if (t[0] == L"start") handleStart(t, conv);
 	}
 	free(buf);
 

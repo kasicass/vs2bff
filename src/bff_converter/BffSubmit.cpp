@@ -4,6 +4,25 @@
 
 #include "BffCommon.hpp"
 
+// start Platform VSINSTALLDIR
+void sendStart(void *conv)
+{
+	zmq_send(conv, L"start", 5*2, 0);
+
+	zmq_send(conv, L"x86", 3*2, 0);
+
+	wchar_t *value = _wgetenv(L"VSINSTALLDIR");
+	if (value)
+		zmq_send(conv, value, wcslen(value)*2, 0);
+	else
+		zmq_send(conv, L"none", 4*2, 0);
+}
+
+void sendEnd(void *conv)
+{
+	zmq_send(conv, L"end", 3*2, 0);
+}
+
 int wmain(int argc, wchar_t *argv[])
 {
 	if (argc < 2)
@@ -19,7 +38,8 @@ int wmain(int argc, wchar_t *argv[])
 	void *conv = zmq_socket(context, ZMQ_PUSH);
 	zmq_connect(conv, address);
 
-	zmq_send(conv, argv[1], wcslen(argv[1])*2, 0);
+	if (wcscmp(argv[1], L"start") == 0) sendStart(conv);
+	else if (wcscmp(argv[1], L"end") == 0) sendEnd(conv);
 
 	zmq_close(conv);
 	zmq_ctx_destroy(context);

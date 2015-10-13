@@ -9,6 +9,7 @@
 #include "OS/Thread.hpp"
 
 #include "Parser/Tokenizer.hpp"
+#include "Parser/Compiler.hpp"
 
 // system include
 #include <zmq.h>

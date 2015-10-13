@@ -40,6 +40,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bff_toolsethook", "apps\bff
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bff_converter", "apps\bff_converter.vcxproj", "{263ABB51-41FC-4BDF-A1AF-5117FE3B7253}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A84498E1-51F2-4A08-AD5E-D44456627C8A} = {A84498E1-51F2-4A08-AD5E-D44456627C8A}
+		{74DD31FC-D8A0-49CB-97F8-322519E7DF71} = {74DD31FC-D8A0-49CB-97F8-322519E7DF71}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bff_submit", "apps\bff_submit.vcxproj", "{EE04B88D-D995-412C-B9B4-36D70AB61CBD}"
 	ProjectSection(ProjectDependencies) = postProject
