@@ -1,4 +1,5 @@
 #include "BffCommon.hpp"
+#include "BffContext.hpp"
 
 using namespace VSBFF;
 
@@ -17,13 +18,51 @@ std::wstring recvOneMsg(void *s)
 	return ret;
 }
 
-void handleStart(const Parser::Tokenizer &t, void *conv)
+// begin
+// platform
+// vsInstallDir
+// PATH
+// INCLUDE
+// SystemRoot
+void handleBegin(VSContext &vscontext, void *conv)
 {
-	std::wstring platform = recvOneMsg(conv);
-	std::wstring vsInstallDir = recvOneMsg(conv);
-	Parser::Compiler c(platform, vsInstallDir);
-	wprintf(c.getString().c_str());
+	vscontext.compiler.platform     = recvOneMsg(conv);
+	vscontext.compiler.vsInstallDir = recvOneMsg(conv);
+	
+	vscontext.settings.PATH         = recvOneMsg(conv);
+	vscontext.settings.INCLUDE      = recvOneMsg(conv);
+	vscontext.settings.SystemRoot   = recvOneMsg(conv);
 }
+
+// cl
+// workingDir
+// cl args
+void handleCL(VSContext &vscontext, void *conv)
+{
+	VSObjectList o;
+	o.workingDir = recvOneMsg(conv);
+	o.cmdline = recvOneMsg(conv);
+
+	vscontext.objlists.push_back(o);
+}
+
+// link
+// workingDir
+// link args
+void handleLink(VSContext &vscontext, void *conv)
+{
+	recvOneMsg(conv);
+	recvOneMsg(conv);
+}
+
+// end
+void handleEnd(VSContext &vscontext, void *conv)
+{
+	BffContext bffcontext;
+	VStoBFF(vscontext, bffcontext);
+	wprintf(BFFtoOutput(bffcontext).c_str());
+}
+
 
 int wmain(int argc, wchar_t *argv[])
 {
@@ -36,22 +75,31 @@ int wmain(int argc, wchar_t *argv[])
 	void *conv = zmq_socket(context, ZMQ_PULL);
 	zmq_bind(conv, address);
 
-	void *buf = malloc(CONV_BUFSIZE);
+	VSContext vscontext;
 	while (1)
 	{
-		int n = zmq_recv(conv, buf, CONV_BUFSIZE, 0);
-		if (n == -1)
-			break;
-
-		std::wstring s((wchar_t*)buf, n/2);
+		std::wstring s = recvOneMsg(conv);
 		VSBFF::Parser::Tokenizer t(s);
 
-		if (t.count() == 1 && t[0] == L"end")
+		//wprintf(L"RECV: %s\n", t[0].c_str());
+		if (t[0] == L"begin")
+		{
+			handleBegin(vscontext, conv);
+		}
+		else if (t[0] == L"cl")
+		{
+			handleCL(vscontext, conv);
+		}
+		else if (t[0] == L"link")
+		{
+			handleLink(vscontext, conv);
+		}
+		else if (t[0] == L"end")
+		{
+			handleEnd(vscontext, conv);
 			break;
-
-		if (t[0] == L"start") handleStart(t, conv);
+		}
 	}
-	free(buf);
 
 	zmq_close(conv);
 	zmq_ctx_destroy(context);

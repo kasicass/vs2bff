@@ -13,12 +13,12 @@
   <ItemGroup>
     <ClInclude Include="..\..\src\bff_common\BffCommon.hpp" />
     <ClInclude Include="..\..\src\bff_common\OS\Thread.hpp" />
-    <ClInclude Include="..\..\src\bff_common\Parser\Compiler.hpp" />
+    <ClInclude Include="..\..\src\bff_common\Parser\StringUtil.hpp" />
     <ClInclude Include="..\..\src\bff_common\Parser\Tokenizer.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\bff_common\OS\Thread.cpp" />
-    <ClCompile Include="..\..\src\bff_common\Parser\Compiler.cpp" />
+    <ClCompile Include="..\..\src\bff_common\Parser\StringUtil.cpp" />
     <ClCompile Include="..\..\src\bff_common\Parser\Tokenizer.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

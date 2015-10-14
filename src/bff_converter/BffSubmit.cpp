@@ -4,18 +4,33 @@
 
 #include "BffCommon.hpp"
 
-// start Platform VSINSTALLDIR
-void sendStart(void *conv)
+void sendWStr(void *s, const std::wstring& wstr)
 {
-	zmq_send(conv, L"start", 5*2, 0);
+	zmq_send(s, wstr.c_str(), wstr.length()*2, 0);
+}
+
+// start Platform VSINSTALLDIR
+void sendBegin(void *conv)
+{
+	zmq_send(conv, L"begin", 5*2, 0);
 
 	zmq_send(conv, L"x86", 3*2, 0);
 
 	wchar_t *value = _wgetenv(L"VSINSTALLDIR");
-	if (value)
-		zmq_send(conv, value, wcslen(value)*2, 0);
-	else
-		zmq_send(conv, L"none", 4*2, 0);
+	if (value) sendWStr(conv, value);
+	else sendWStr(conv, L"none");
+
+	value = _wgetenv(L"PATH");
+	if (value) sendWStr(conv, value);
+	else sendWStr(conv, L"none");
+
+	value = _wgetenv(L"INCLUDE");
+	if (value) sendWStr(conv, value);
+	else sendWStr(conv, L"none");
+
+	value = _wgetenv(L"SystemRoot");
+	if (value) sendWStr(conv, value);
+	else sendWStr(conv, L"none");
 }
 
 void sendEnd(void *conv)
@@ -38,7 +53,7 @@ int wmain(int argc, wchar_t *argv[])
 	void *conv = zmq_socket(context, ZMQ_PUSH);
 	zmq_connect(conv, address);
 
-	if (wcscmp(argv[1], L"start") == 0) sendStart(conv);
+	if (wcscmp(argv[1], L"begin") == 0) sendBegin(conv);
 	else if (wcscmp(argv[1], L"end") == 0) sendEnd(conv);
 
 	zmq_close(conv);

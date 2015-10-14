@@ -32,17 +32,39 @@ std::wstring getCurrDir()
 
 int wmain(int argc, wchar_t *argv[])
 {
+	VSBFF::Parser::StringUtil su;
+	std::wstring cmd(argv[0]);
+	su.tolower(cmd);
+
+	std::wstring cmdname = L"cl";
+	if (cmd.find(L"cl.exe") != std::wstring::npos) {
+		cmdname = L"cl";
+	}
+	else if (cmd.find(L"lib.exe") != std::wstring::npos) {
+		cmdname = L"lib";
+	}
+	else if (cmd.find(L"link.exe") != std::wstring::npos) {
+		cmdname = L"link";
+	}
+	else if (cmd.find(L"rc.exe") != std::wstring::npos) {
+		cmdname = L"rc";
+	}
+	else {
+		exit(0);
+	}
+
+	// send args
 	const char *address = getenv("VSBFF_CONVERTER_ADDRESS");
 	if (!address) address = VSBFF_CONVERTER_ADDRESS;
 
 	void *context = zmq_ctx_new();
-	void *logger = zmq_socket(context, ZMQ_PUSH);
-	zmq_connect(logger, address);
+	void *conv = zmq_socket(context, ZMQ_PUSH);
+	zmq_connect(conv, address);
 
 	std::wstringstream output;
-	output << L"PWD:" << getCurrDir() << L"\n";
+	//output << L"PWD:" << getCurrDir() << L"\n";
 
-	for (int i = 0; i < argc; ++i)
+	for (int i = 1; i < argc; ++i)
 	{
 		if (argv[i][0] == L'@')
 		{
@@ -54,12 +76,16 @@ int wmain(int argc, wchar_t *argv[])
 			output << L" ";
 		}
 	}
-	output << L"\n";
+
+	zmq_send(conv, cmdname.c_str(), cmdname.length()*2, 0);
+
+	std::wstring workingDir = getCurrDir();
+	zmq_send(conv, workingDir.c_str(), workingDir.length()*2, 0);
 
 	std::wstring text = output.str();
-	zmq_send(logger, text.c_str(), text.length()*2, 0);
+	zmq_send(conv, text.c_str(), text.length()*2, 0);
 
-	zmq_close(logger);
+	zmq_close(conv);
 	zmq_ctx_destroy(context);
 	return 0;
 }

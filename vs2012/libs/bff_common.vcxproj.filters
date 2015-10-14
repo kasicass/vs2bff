@@ -8,7 +8,7 @@
     <ClInclude Include="..\..\src\bff_common\Parser\Tokenizer.hpp">
       <Filter>Parser</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\bff_common\Parser\Compiler.hpp">
+    <ClInclude Include="..\..\src\bff_common\Parser\StringUtil.hpp">
       <Filter>Parser</Filter>
     </ClInclude>
   </ItemGroup>
@@ -27,7 +27,7 @@
     <ClCompile Include="..\..\src\bff_common\Parser\Tokenizer.cpp">
       <Filter>Parser</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\bff_common\Parser\Compiler.cpp">
+    <ClCompile Include="..\..\src\bff_common\Parser\StringUtil.cpp">
       <Filter>Parser</Filter>
     </ClCompile>
   </ItemGroup>

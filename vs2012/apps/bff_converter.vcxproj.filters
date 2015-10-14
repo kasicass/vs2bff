@@ -2,5 +2,9 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="..\..\src\bff_converter\BffConverter.cpp" />
+    <ClCompile Include="..\..\src\bff_converter\BffContext.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\bff_converter\BffContext.hpp" />
   </ItemGroup>
 </Project>
