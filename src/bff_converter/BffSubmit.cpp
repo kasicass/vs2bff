@@ -10,11 +10,11 @@ void sendWStr(void *s, const std::wstring& wstr)
 }
 
 // start Platform VSINSTALLDIR
-void sendBegin(void *conv)
+void sendBegin(void *conv, const std::wstring& platform)
 {
 	zmq_send(conv, L"begin", 5*2, 0);
 
-	zmq_send(conv, L"x86", 3*2, 0);
+	zmq_send(conv, platform.c_str(), platform.length()*2, 0);
 
 	wchar_t *value = _wgetenv(L"VSINSTALLDIR");
 	if (value) sendWStr(conv, value);
@@ -57,7 +57,7 @@ int wmain(int argc, wchar_t *argv[])
 	void *conv = zmq_socket(context, ZMQ_PUSH);
 	zmq_connect(conv, address);
 
-	if (wcscmp(argv[1], L"begin") == 0) sendBegin(conv);
+	if (wcscmp(argv[1], L"begin") == 0) sendBegin(conv, argv[2]);
 	else if (wcscmp(argv[1], L"end") == 0) sendEnd(conv);
 
 	zmq_close(conv);
