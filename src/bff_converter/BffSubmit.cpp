@@ -28,6 +28,10 @@ void sendBegin(void *conv)
 	if (value) sendWStr(conv, value);
 	else sendWStr(conv, L"none");
 
+	value = _wgetenv(L"LIB");
+	if (value) sendWStr(conv, value);
+	else sendWStr(conv, L"none");
+
 	value = _wgetenv(L"SystemRoot");
 	if (value) sendWStr(conv, value);
 	else sendWStr(conv, L"none");

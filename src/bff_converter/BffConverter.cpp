@@ -31,6 +31,7 @@ void handleBegin(VSContext &vscontext, void *conv)
 	
 	vscontext.settings.PATH         = recvOneMsg(conv);
 	vscontext.settings.INCLUDE      = recvOneMsg(conv);
+	vscontext.settings.LIB          = recvOneMsg(conv);
 	vscontext.settings.SystemRoot   = recvOneMsg(conv);
 }
 
@@ -43,7 +44,7 @@ void handleCL(VSContext &vscontext, void *conv)
 	o.workingDir = recvOneMsg(conv);
 	o.cmdline = recvOneMsg(conv);
 
-	vscontext.objlists.push_back(o);
+	vscontext.lastObj = o;
 }
 
 // link
@@ -51,8 +52,15 @@ void handleCL(VSContext &vscontext, void *conv)
 // link args
 void handleLink(VSContext &vscontext, void *conv)
 {
-	recvOneMsg(conv);
-	recvOneMsg(conv);
+	VSLink l;
+	l.workingDir = recvOneMsg(conv);
+	l.cmdline = recvOneMsg(conv);
+
+	VSExecutable exe;
+	exe.obj = vscontext.lastObj;
+	exe.link = l;
+
+	vscontext.exes.push_back(exe);
 }
 
 // end
