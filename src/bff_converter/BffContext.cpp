@@ -134,7 +134,6 @@ static BffLink Link_VStoBFF(const VSLink& link)
 	return out;
 }
 
-
 void VStoBFF(const VSContext& vs, BffContext& bff)
 {
 	bff.compiler = vs.compiler;
@@ -216,6 +215,72 @@ void BffExecutable_Output(std::wstringstream &wss, const BffExecutable &exe)
 	BffLink_Output(wss, exe.link);
 }
 
+void BffCompiler_Output(std::wstringstream& wss, const Compiler& compiler)
+{
+	// Compiler
+	std::wstring compilerTag(L"'Compiler-" + compiler.platform + L"'");
+	if (compiler.vsInstallDir.find(L"Visual Studio 12") != std::wstring::npos)
+	{
+		// VS2013-x86
+		wss << ".VSBasePath = '" << compiler.vsInstallDir << "'"                      << L"\n"
+			<< "Compiler(" << compilerTag << ")"                                      << L"\n"
+			<< "{"                                                                    << L"\n"
+			<< "  .Executable = '$VSBasePath$\\VC\\bin\\cl.exe'"                      << L"\n"
+			<< "  .ExtraFiles = {"                                                    << L"\n"
+			<< "    '$VSBasePath$\\VC\\bin\\c1.dll'"                                  << L"\n"
+			<< "    '$VSBasePath$\\VC\\bin\\c1ast.dll'"                               << L"\n"
+			<< "    '$VSBasePath$\\VC\\bin\\c1xx.dll'"                                << L"\n"
+			<< "    '$VSBasePath$\\VC\\bin\\c1xxast.dll'"                             << L"\n"
+			<< "    '$VSBasePath$\\VC\\bin\\c2.dll'"                                  << L"\n"
+			<< "    '$VSBasePath$\\VC\\bin\\msobj120.dll'"                            << L"\n"
+			<< "    '$VSBasePath$\\VC\\bin\\mspdb120.dll'"                            << L"\n"
+			<< "    '$VSBasePath$\\VC\\bin\\mspdbsrv.exe'"                            << L"\n"
+			<< "    '$VSBasePath$\\VC\\bin\\mspdbcore.dll'"                           << L"\n"
+			<< "    '$VSBasePath$\\VC\\bin\\mspft120.dll'"                            << L"\n"
+			<< "    '$VSBasePath$\\VC\\bin\\1033\\clui.dll'"                          << L"\n"
+			<< "    '$VSBasePath$\\VC\\redist\\x86\\Microsoft.VC120.CRT\\msvcp120.dll'"    << L"\n"
+			<< "    '$VSBasePath$\\VC\\redist\\x86\\Microsoft.VC120.CRT\\msvcr120.dll'"    << L"\n"
+			<< "    '$VSBasePath$\\VC\\redist\\x86\\Microsoft.VC120.CRT\\vccorlib120.dll'" << L"\n"
+			<< "  }"                                                                  << L"\n"
+			<< "}"                                                                    << L"\n"
+			<< ".Compiler  = " << compilerTag                                         << L"\n"
+			<< ".Librarian = '$VSBasePath$\\VC\\bin\\lib.exe'"                        << L"\n"
+			<< ".Linker    = '$VSBasePath$\\VC\\bin\\link.exe'"                       << L"\n\n";
+	}
+	else if (compiler.vsInstallDir.find(L"Visual Studio 14") != std::wstring::npos)
+	{
+		// TODO
+	}
+	else
+	{
+		// VS2012-x86 and default
+		wss << ".VSBasePath = '" << compiler.vsInstallDir << "'"                      << L"\n"
+			<< "Compiler(" << compilerTag << ")"                                      << L"\n"
+			<< "{"                                                                    << L"\n"
+			<< "  .Executable = '$VSBasePath$\\VC\\bin\\cl.exe'"                      << L"\n"
+			<< "  .ExtraFiles = {"                                                    << L"\n"
+			<< "    '$VSBasePath$\\VC\\bin\\c1.dll'"                                  << L"\n"
+			<< "    '$VSBasePath$\\VC\\bin\\c1ast.dll'"                               << L"\n"
+			<< "    '$VSBasePath$\\VC\\bin\\c1xx.dll'"                                << L"\n"
+			<< "    '$VSBasePath$\\VC\\bin\\c1xxast.dll'"                             << L"\n"
+			<< "    '$VSBasePath$\\VC\\bin\\c2.dll'"                                  << L"\n"
+			<< "    '$VSBasePath$\\Common7\\IDE\\msobj110.dll'"                       << L"\n"
+			<< "    '$VSBasePath$\\Common7\\IDE\\mspdb110.dll'"                       << L"\n"
+			<< "    '$VSBasePath$\\Common7\\IDE\\mspdbsrv.exe'"                       << L"\n"
+			<< "    '$VSBasePath$\\Common7\\IDE\\mspdbcore.dll'"                      << L"\n"
+			<< "    '$VSBasePath$\\VC\\bin\\mspft110.dll'"                            << L"\n"
+			<< "    '$VSBasePath$\\VC\\bin\\1033\\clui.dll'"                          << L"\n"
+			<< "    '$VSBasePath$\\VC\\redist\\x86\\Microsoft.VC110.CRT\\msvcp110.dll'"    << L"\n"
+			<< "    '$VSBasePath$\\VC\\redist\\x86\\Microsoft.VC110.CRT\\msvcr110.dll'"    << L"\n"
+			<< "    '$VSBasePath$\\VC\\redist\\x86\\Microsoft.VC110.CRT\\vccorlib110.dll'" << L"\n"
+			<< "  }"                                                                  << L"\n"
+			<< "}"                                                                    << L"\n"
+			<< ".Compiler  = " << compilerTag                                         << L"\n"
+			<< ".Librarian = '$VSBasePath$\\VC\\bin\\lib.exe'"                        << L"\n"
+			<< ".Linker    = '$VSBasePath$\\VC\\bin\\link.exe'"                       << L"\n\n";
+	}
+}
+
 std::wstring BFFtoOutput(const BffContext& bff)
 {
 	std::wstringstream wss;
@@ -233,74 +298,8 @@ std::wstring BFFtoOutput(const BffContext& bff)
 		<< L"  .CachePath = 'C:\\.fbuild.cache'"                  << L"\n"
 		<< L"}"                                                   << L"\n\n";
 
-
-/* VS2012
-					'$VSBasePath$\Common7\IDE\msobj110.dll'
-					'$VSBasePath$\Common7\IDE\mspdb110.dll'
-					'$VSBasePath$\Common7\IDE\mspdbsrv.exe'
-					'$VSBasePath$\Common7\IDE\mspdbcore.dll'
-					'$Root$\mspft110.dll'
-					'$Root$\1033\clui.dll'
-					'$VSBasePath$\VC\redist\x86\Microsoft.VC110.CRT\msvcp110.dll'
-					'$VSBasePath$\VC\redist\x86\Microsoft.VC110.CRT\msvcr110.dll'
-					'$VSBasePath$\VC\redist\x86\Microsoft.VC110.CRT\vccorlib110.dll'
-*/
-
 	// Compiler
-	std::wstring compilerTag(L"'Compiler-" + bff.compiler.platform + L"'");
-	wss << ".VSBasePath = '" << bff.compiler.vsInstallDir << "'"                  << L"\n"
-		<< "Compiler(" << compilerTag << ")"                                      << L"\n"
-		<< "{"                                                                    << L"\n"
-		<< "  .Executable = '$VSBasePath$\\VC\\bin\\cl.exe'"                      << L"\n"
-		<< "  .ExtraFiles = {"                                                    << L"\n"
-		<< "    '$VSBasePath$\\VC\\bin\\c1.dll'"                                  << L"\n"
-		<< "    '$VSBasePath$\\VC\\bin\\c1ast.dll'"                               << L"\n"
-		<< "    '$VSBasePath$\\VC\\bin\\c1xx.dll'"                                << L"\n"
-		<< "    '$VSBasePath$\\VC\\bin\\c1xxast.dll'"                             << L"\n"
-		<< "    '$VSBasePath$\\VC\\bin\\c2.dll'"                                  << L"\n"
-		<< "    '$VSBasePath$\\Common7\\IDE\\msobj110.dll'"                       << L"\n"
-		<< "    '$VSBasePath$\\Common7\\IDE\\mspdb110.dll'"                       << L"\n"
-		<< "    '$VSBasePath$\\Common7\\IDE\\mspdbsrv.exe'"                       << L"\n"
-		<< "    '$VSBasePath$\\Common7\\IDE\\mspdbcore.dll'"                      << L"\n"
-		<< "    '$VSBasePath$\\VC\\bin\\mspft110.dll'"                            << L"\n"
-		<< "    '$VSBasePath$\\VC\\bin\\1033\\clui.dll'"                          << L"\n"
-		<< "    '$VSBasePath$\\VC\\redist\\x86\\Microsoft.VC110.CRT\\msvcp110.dll'"    << L"\n"
-		<< "    '$VSBasePath$\\VC\\redist\\x86\\Microsoft.VC110.CRT\\msvcr110.dll'"    << L"\n"
-		<< "    '$VSBasePath$\\VC\\redist\\x86\\Microsoft.VC110.CRT\\vccorlib110.dll'" << L"\n"
-		<< "  }"                                                                  << L"\n"
-		<< "}"                                                                    << L"\n"
-		<< ".Compiler  = " << compilerTag                                         << L"\n"
-		<< ".Librarian = '$VSBasePath$\\VC\\bin\\lib.exe'"                        << L"\n"
-		<< ".Linker    = '$VSBasePath$\\VC\\bin\\link.exe'"                       << L"\n\n";
-
-#if 0  // VS2013
-	// Compiler
-	std::wstring compilerTag(L"'Compiler-" + bff.compiler.platform + L"'");
-	wss << ".VSBasePath = '" << bff.compiler.vsInstallDir << "'"                  << L"\n"
-		<< "Compiler(" << compilerTag << ")"                                      << L"\n"
-		<< "{"                                                                    << L"\n"
-		<< "  .Executable = '$VSBasePath$\\VC\\bin\\cl.exe'"                      << L"\n"
-		<< "  .ExtraFiles = {"                                                    << L"\n"
-		<< "    '$VSBasePath$\\VC\\bin\\c1.dll'"                                  << L"\n"
-		<< "    '$VSBasePath$\\VC\\bin\\c1ast.dll'"                               << L"\n"
-		<< "    '$VSBasePath$\\VC\\bin\\c1xx.dll'"                                << L"\n"
-		<< "    '$VSBasePath$\\VC\\bin\\c1xxast.dll'"                             << L"\n"
-		<< "    '$VSBasePath$\\VC\\bin\\c2.dll'"                                  << L"\n"
-		<< "    '$VSBasePath$\\VC\\bin\\msobj120.dll'"                            << L"\n"
-		<< "    '$VSBasePath$\\VC\\bin\\mspdb120.dll'"                            << L"\n"
-		<< "    '$VSBasePath$\\VC\\bin\\mspdbsrv.exe'"                            << L"\n"
-		<< "    '$VSBasePath$\\VC\\bin\\mspdbcore.dll'"                           << L"\n"
-		<< "    '$VSBasePath$\\VC\\bin\\mspft120.dll'"                            << L"\n"
-		<< "    '$VSBasePath$\\VC\\bin\\1033\\clui.dll'"                          << L"\n"
-		<< "    '$VSBasePath$\\VC\\redist\\x86\\Microsoft.VC120.CRT\\msvcp120.dll'"    << L"\n"
-		<< "    '$VSBasePath$\\VC\\redist\\x86\\Microsoft.VC120.CRT\\msvcr120.dll'"    << L"\n"
-		<< "    '$VSBasePath$\\VC\\redist\\x86\\Microsoft.VC120.CRT\\vccorlib120.dll'" << L"\n"
-		<< "  }"                                                                  << L"\n"
-		<< "}"                                                                    << L"\n"
-		<< ".Compiler  = " << compilerTag                                         << L"\n"
-		<< ".Librarian = '$VSBasePath$\\VC\\bin\\lib.exe'"                        << L"\n"
-		<< ".Linker    = '$VSBasePath$\\VC\\bin\\link.exe'"                       << L"\n\n";
-#endif
+	BffCompiler_Output(wss, bff.compiler);
 
 	// Executable
 	for (auto exe = bff.exes.cbegin(); exe != bff.exes.cend(); ++exe)
