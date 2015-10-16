@@ -26,18 +26,24 @@ struct VSLink {
 };
 
 struct VSExecutable {
-	VSObjectList obj;
+	std::vector<VSObjectList> objs;
 	VSLink link;
 };
 
 struct VSContext {
 	Compiler compiler;
 	Settings settings;
-	VSObjectList lastObj;
+	std::vector<VSObjectList> lastObjs;
 	std::vector<VSExecutable> exes;
 };
 
 // ----------------
+
+struct BffObjectPCH {
+	std::wstring inputFile;
+	std::wstring outputFile;
+	std::wstring options;
+};
 
 struct BffObjectList {
 	std::wstring name;
@@ -55,6 +61,7 @@ struct BffLink {
 };
 
 struct BffExecutable {
+	BffObjectPCH pch;
 	BffObjectList obj;
 	BffLink link;
 };

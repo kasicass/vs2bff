@@ -3,6 +3,89 @@
 #include <assert.h>
 #include <sstream>
 
+static std::wstring RelativePathToAbsolutePath(const std::wstring& rpath, const std::wstring& workingDir)
+{
+	if (rpath.length() > 1 && rpath[1] == L':')
+	{
+		return rpath;
+	}
+	return workingDir + L"\\" + rpath;
+}
+
+static BffObjectPCH ObjectPCH_VStoBFF(const VSObjectList& in)
+{
+	// D:\myprj\vs2bff\bin\Debug\CL.exe /c /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG
+	// /D _CONSOLE /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t
+	// /Zc:forScope /Yc"stdafx.h" /Fp"Debug\ConsolePCH.pch" /Fo"Debug\\" /Fd"Debug\vc110.pdb"
+	// /Gd /TP /analyze- /errorReport:queue stdafx.cpp
+	//
+	// /Yc and /Yu
+	
+	BffObjectPCH out;
+	VSBFF::Parser::StringUtil su;
+
+	VSBFF::Parser::Tokenizer t(in.cmdline);
+	for (unsigned int i = 0; i < t.count(); ++i)
+	{
+		const std::wstring& token = t[i];
+		if (token[0] == L'/')
+		{
+			if (token == L"/D") // /D XXX
+			{
+				out.options += L" ";
+				out.options += token;
+
+				++i;
+				out.options += L" ";
+				out.options += t[i];
+			}
+			else if (su.startswith(token, L"/Fo"))
+			{
+				// /Fo"..." => ...
+				/*
+				std::wstring outDir = token.substr(4, token.length()-1-4);
+				outDir = RelativePathToAbsolutePath(outDir, in.workingDir);
+				out.options += L" /Fo\"";
+				out.options += outDir;
+				out.options += L"\"";
+				*/
+				out.options += L" /Fo\"%%3\""; // .obj name must be 'PreCompile.pch.obj', fastbuild needs it
+			}
+			else if (su.startswith(token, L"/Fp"))
+			{
+				// /Fp"..." => ...
+				out.outputFile = token.substr(4, token.length()-1-4);
+				out.outputFile = RelativePathToAbsolutePath(out.outputFile, in.workingDir);
+				out.options += L" /Fp\"$PCHOutputFile$\"";
+			}
+			else if (su.startswith(token, L"/Fd"))
+			{
+				// /Fd"..." => ...
+				std::wstring pdbFile = token.substr(4, token.length()-1-4);
+				pdbFile = RelativePathToAbsolutePath(pdbFile, in.workingDir);
+				out.options += L" /Fd\"";
+				out.options += pdbFile;
+				out.options += L"\"";
+			}
+			else
+			{
+				out.options += L" ";
+				out.options += token;
+			}
+		}
+		else
+		{
+			out.inputFile = RelativePathToAbsolutePath(token, in.workingDir);
+		}
+	}
+	out.options += L" %%1";
+
+	assert(!out.inputFile.empty() &&
+		!out.options.empty() &&
+		!out.outputFile.empty());
+	return out;
+}
+
 static BffObjectList ObjectList_VStoBFF(const VSObjectList& in, const std::wstring& platform)
 {
 	// cl.exe /c /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE
@@ -13,25 +96,15 @@ static BffObjectList ObjectList_VStoBFF(const VSObjectList& in, const std::wstri
 
 	BffObjectList out;
 	out.compiler = L"Compiler-" + platform;
-	
-	enum {
-		IN_FLAG,
-		IN_SOURCE,
-	} state = IN_FLAG;
 
-	out.compilerOptions = L"%%1 /Fo%%2";
+	VSBFF::Parser::StringUtil su;
 	VSBFF::Parser::Tokenizer t(in.cmdline);
 	for (unsigned int i = 0; i < t.count(); ++i)
 	{
-		if (state == IN_FLAG)
+		const std::wstring& token = t[i];
+		if (token[0] == L'/')
 		{
-			const std::wstring& token = t[i];
-			if (token[0] != L'/')
-			{
-				state = IN_SOURCE;
-				out.compilerInputFiles.push_back(in.workingDir + L"\\" + t[i]);
-			}
-			else if (token == L"/D") // /D XXX
+			if (token == L"/D") // /D XXX
 			{
 				out.compilerOptions += L" ";
 				out.compilerOptions += token;
@@ -40,10 +113,26 @@ static BffObjectList ObjectList_VStoBFF(const VSObjectList& in, const std::wstri
 				out.compilerOptions += L" ";
 				out.compilerOptions += t[i];
 			}
-			else if (token.length() > 3 && token[1] == L'F' && token[2] == L'o')  // /Fo"..."
+			else if (su.startswith(token, L"/Fo"))
 			{
 				// /Fo"..." => ...
 				out.compilerOutputPath = token.substr(4, token.length()-1-4);
+				out.compilerOutputPath = RelativePathToAbsolutePath(out.compilerOutputPath, in.workingDir);
+				out.compilerOptions += L" /Fo%%2";
+			}
+			else if (su.startswith(token, L"/Fp"))
+			{
+				// /Fp"..." => ...
+				out.compilerOptions += L" /Fp\"$PCHOutputFile$\"";
+			}
+			else if (su.startswith(token, L"/Fd"))
+			{
+				// /Fd"..." => ...
+				std::wstring pdbFile = token.substr(4, token.length()-1-4);
+				pdbFile = RelativePathToAbsolutePath(pdbFile, in.workingDir);
+				out.compilerOptions += L" /Fd\"";
+				out.compilerOptions += pdbFile;
+				out.compilerOptions += L"\"";
 			}
 			else
 			{
@@ -51,11 +140,12 @@ static BffObjectList ObjectList_VStoBFF(const VSObjectList& in, const std::wstri
 				out.compilerOptions += token;
 			}
 		}
-		else if (state == IN_SOURCE)
+		else
 		{
 			out.compilerInputFiles.push_back(in.workingDir + L"\\" + t[i]);
 		}
 	}
+	out.compilerOptions += L" %%1";
 
 	assert(!out.compilerInputFiles.empty() &&
 		!out.compilerOptions.empty() &&
@@ -144,8 +234,18 @@ void VStoBFF(const VSContext& vs, BffContext& bff)
 		BffExecutable exe;
 		exe.link = Link_VStoBFF(it->link);
 
-		exe.obj = ObjectList_VStoBFF(it->obj, bff.compiler.platform);
-		exe.obj.name = exe.link.name + L"_0";
+		if (it->objs.size() == 1)
+		{
+			exe.obj = ObjectList_VStoBFF(it->objs[0], bff.compiler.platform);
+			exe.obj.name = exe.link.name + L"_0";
+		}
+		else
+		{
+			// PCH
+			exe.pch = ObjectPCH_VStoBFF(it->objs[0]);
+			exe.obj = ObjectList_VStoBFF(it->objs[1], bff.compiler.platform);
+			exe.obj.name = exe.link.name + L"_0";
+		}
 
 		exe.link.libraries.push_back(exe.obj.name);
 		
@@ -154,7 +254,7 @@ void VStoBFF(const VSContext& vs, BffContext& bff)
 }
 
 
-void BffObjectList_Output(std::wstringstream &wss, const BffObjectList &o)
+void BffObjectList_Output(std::wstringstream &wss, const BffObjectList &o, const BffObjectPCH &pch)
 {
 /*
 ObjectList('name')
@@ -167,8 +267,16 @@ ObjectList('name')
 */
 
 	wss << L"ObjectList('" << o.name << "')"                                 << L"\n"
-		<< L"{"                                                              << L"\n"
-		<< L"  .Compiler = '" << o.compiler << L"'"                          << L"\n"
+		<< L"{"                                                              << L"\n";
+
+	if (!pch.inputFile.empty())
+	{
+		wss << L"  .PCHInputFile = '" << pch.inputFile << L"'"             << L"\n"
+			<< L"  .PCHOutputFile = '" << pch.outputFile << L"'"           << L"\n"
+			<< L"  .PCHOptions = '" << pch.options << L"'"                 << L"\n";
+	}
+
+	wss	<< L"  .Compiler = '" << o.compiler << L"'"                          << L"\n"
 		<< L"  .CompilerOptions = '" << o.compilerOptions << "'"             << L"\n"
 		<< L"  .CompilerOutputPath = '" << o.compilerOutputPath << "'"       << L"\n"
 		<< L"  .CompilerInputFiles = {"                                      << L"\n";
@@ -211,7 +319,7 @@ Executable('name')
 
 void BffExecutable_Output(std::wstringstream &wss, const BffExecutable &exe)
 {
-	BffObjectList_Output(wss, exe.obj);
+	BffObjectList_Output(wss, exe.obj, exe.pch);
 	BffLink_Output(wss, exe.link);
 }
 

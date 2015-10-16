@@ -44,7 +44,7 @@ void handleCL(VSContext &vscontext, void *conv)
 	o.workingDir = recvOneMsg(conv);
 	o.cmdline = recvOneMsg(conv);
 
-	vscontext.lastObj = o;
+	vscontext.lastObjs.push_back(o);
 }
 
 // link
@@ -57,9 +57,10 @@ void handleLink(VSContext &vscontext, void *conv)
 	l.cmdline = recvOneMsg(conv);
 
 	VSExecutable exe;
-	exe.obj = vscontext.lastObj;
+	exe.objs = vscontext.lastObjs;
 	exe.link = l;
 
+	vscontext.lastObjs.clear();
 	vscontext.exes.push_back(exe);
 }
 
