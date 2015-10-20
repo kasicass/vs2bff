@@ -49,7 +49,7 @@ void handleCL(VSContext &vscontext, void *conv)
 
 // link
 // workingDir
-// link args
+// link.exe args
 void handleLink(VSContext &vscontext, void *conv)
 {
 	VSLink l;
@@ -62,6 +62,23 @@ void handleLink(VSContext &vscontext, void *conv)
 
 	vscontext.lastObjs.clear();
 	vscontext.exes.push_back(exe);
+}
+
+// lib
+// workingDir
+// lib.exe args
+void handleLib(VSContext &vscontext, void *conv)
+{
+	VSLib l;
+	l.workingDir = recvOneMsg(conv);
+	l.cmdline = recvOneMsg(conv);
+
+	VSLibrary library;
+	library.objs = vscontext.lastObjs;
+	library.lib = l;
+
+	vscontext.lastObjs.clear();
+	vscontext.libs.push_back(library);
 }
 
 // end
@@ -102,6 +119,10 @@ int wmain(int argc, wchar_t *argv[])
 		else if (t[0] == L"link")
 		{
 			handleLink(vscontext, conv);
+		}
+		else if (t[0] == L"lib")
+		{
+			handleLib(vscontext, conv);
 		}
 		else if (t[0] == L"end")
 		{

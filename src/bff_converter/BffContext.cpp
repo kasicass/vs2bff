@@ -2,6 +2,7 @@
 #include "BffContext.hpp"
 #include <assert.h>
 #include <sstream>
+#include <unordered_set>
 
 static std::wstring RelativePathToAbsolutePath(const std::wstring& rpath, const std::wstring& workingDir)
 {
@@ -10,6 +11,32 @@ static std::wstring RelativePathToAbsolutePath(const std::wstring& rpath, const 
 		return rpath;
 	}
 	return workingDir + L"\\" + rpath;
+}
+
+static std::wstring PathToFileName(const std::wstring& path)
+{
+	std::wstring::size_type i = path.find_last_of(L'\\');
+	if (i != std::wstring::npos)
+	{
+		return path.substr(i);
+	}
+	else
+	{
+		return path;
+	}
+}
+
+static std::wstring FileNameRemovePostfix(const std::wstring& s)
+{
+	std::wstring::size_type i = s.find_last_of(L'.');
+	if (i != std::wstring::npos)
+	{
+		return s.substr(0, i);
+	}
+	else
+	{
+		return s;
+	}
 }
 
 static BffObjectPCH ObjectPCH_VStoBFF(const VSObjectList& in)
@@ -153,7 +180,7 @@ static BffObjectList ObjectList_VStoBFF(const VSObjectList& in, const std::wstri
 	return out;
 }
 
-static BffLink Link_VStoBFF(const VSLink& link)
+static BffLink Link_VStoBFF(const VSLink& link, const std::unordered_set<std::wstring>& librarySet)
 {
 	// d:\myprj\vs2bff\bin\Debug\link.exe /ERRORREPORT:QUEUE 
 	// /OUT:"d:\myprj\vs2bff\tests\01_simple\vs2012\..\bin\Debug\HelloWorld.exe"
@@ -216,6 +243,12 @@ static BffLink Link_VStoBFF(const VSLink& link)
 			{
 				out.linkerOptions += L" ";
 				out.linkerOptions += token;
+
+				std::wstring name = FileNameRemovePostfix(PathToFileName(token));
+				if (librarySet.find(name) != librarySet.end())
+				{
+					out.libraries.push_back(name);
+				}
 			}
 		}
 	}
@@ -224,15 +257,93 @@ static BffLink Link_VStoBFF(const VSLink& link)
 	return out;
 }
 
+BffLib VSLib_To_BffLib(const VSLib& in)
+{
+	// lib.exe /OUT:"D:\myprj\vs2bff\tests\04_LibAndExe\vs2012\..\lib\Debug\MyLib.lib" /NOLOGO
+	// D:\myprj\vs2bff\tests\04_LibAndExe\vs2012\..\build\MyLib\Debug\MyLib.obj
+
+	BffLib out;
+	VSBFF::Parser::StringUtil su;
+
+	VSBFF::Parser::Tokenizer t(in.cmdline);
+	for (unsigned int i = 0; i < t.count(); ++i)
+	{
+		const std::wstring& token = t[i];
+		if (token[0] == L'/')
+		{
+			if (su.startswith(token, L"/OUT"))
+			{
+				// /OUT:"..." => ...
+				out.librarianOutput  = token.substr(6, token.length()-1-6);
+				out.librarianOptions += L" /OUT:\"%%2\"";
+
+				// xx\yy\zz.lib => zz
+				auto pos = out.librarianOutput.find_last_of(L"\\");
+				if (pos != std::wstring::npos)
+				{
+					out.name = out.librarianOutput.substr(pos+1, out.librarianOutput.length()-4-(pos+1));
+				}
+				else
+				{
+					out.name = out.librarianOutput.substr(0, out.librarianOutput.length()-4);
+				}
+			}
+			else
+			{
+				out.librarianOptions += L" ";
+				out.librarianOptions += token;
+			}
+		}
+		else
+		{
+			// ignore *.obj
+			/*
+			if (su.endswith(token, L".obj"))
+			{
+				out.librarianOptions += L" ";
+				out.librarianOptions += token;
+			}
+			*/
+		}
+	}
+
+	out.librarianOptions += L" %%1";
+	return out;
+}
+
 void VStoBFF(const VSContext& vs, BffContext& bff)
 {
+	std::unordered_set<std::wstring> librarySet;
+
 	bff.compiler = vs.compiler;
 	bff.settings = vs.settings;
 	
+	for (auto it = vs.libs.cbegin(); it != vs.libs.cend(); ++it)
+	{
+		BffLibrary library;
+		library.lib = VSLib_To_BffLib(it->lib);
+
+		if (it->objs.size() == 1)
+		{
+			library.obj = ObjectList_VStoBFF(it->objs[0], bff.compiler.platform);
+			library.obj.name = library.lib.name + L"_0";
+		}
+		else
+		{
+			// PCH
+			library.pch = ObjectPCH_VStoBFF(it->objs[0]);
+			library.obj = ObjectList_VStoBFF(it->objs[1], bff.compiler.platform);
+			library.obj.name = library.lib.name + L"_0";
+		}
+
+		librarySet.insert(library.lib.name);
+		bff.libs.push_back(library);
+	}
+
 	for (auto it = vs.exes.cbegin(); it != vs.exes.cend(); ++it)
 	{
 		BffExecutable exe;
-		exe.link = Link_VStoBFF(it->link);
+		exe.link = Link_VStoBFF(it->link, librarySet);
 
 		if (it->objs.size() == 1)
 		{
@@ -323,6 +434,63 @@ void BffExecutable_Output(std::wstringstream &wss, const BffExecutable &exe)
 	BffLink_Output(wss, exe.link);
 }
 
+void BffLibrary_Output(std::wstringstream &wss, const BffLibrary &library)
+{
+/*
+Library('name')
+{
+  .PCHInputFile = '...'
+  .PCHOutputFile = '...'
+  .PCHOptions = '...'
+
+  .Compiler = '...'                  // path to cl.exe
+  .CompilerOptions = '...'
+  .CompilerOutputPath = '...'
+  .CompilerInputFiles = {
+    '...'
+  }
+
+  .Librarian = '...'                 // path to lib.exe
+  .LibrarianOptions = '...'
+  .LibrarianOutput  = '...'
+
+}
+*/
+	const BffObjectList &o  = library.obj;
+	const BffObjectPCH &pch = library.pch;
+	const BffLib &lib = library.lib;
+
+	wss << L"Library('" << lib.name << L"')"                               << L"\n"
+		<< L"{"                                                            << L"\n";
+
+	// pch
+	if (!pch.inputFile.empty())
+	{
+		wss << L"  .PCHInputFile = '" << pch.inputFile << L"'"             << L"\n"
+			<< L"  .PCHOutputFile = '" << pch.outputFile << L"'"           << L"\n"
+			<< L"  .PCHOptions = '" << pch.options << L"'"                 << L"\n\n";
+	}
+
+	// compile
+	wss << L"  .CompilerOptions = '" << o.compilerOptions << "'"             << L"\n"
+		<< L"  .CompilerOutputPath = '" << o.compilerOutputPath << "'"       << L"\n"
+		<< L"  .CompilerInputFiles = {"                                      << L"\n";
+		
+	for (auto file = o.compilerInputFiles.cbegin(); file != o.compilerInputFiles.cend(); ++file)
+	{
+		wss << L"    '" << *file << L"'\n";
+	}
+	
+	wss << L"  }"                                                          << L"\n\n";
+
+	// lib
+	wss << L"  .LibrarianOptions = '" << lib.librarianOptions << L"'"      << L"\n"
+		<< L"  .LibrarianOutput = '" << lib.librarianOutput << L"'"        << L"\n";
+
+	wss << L"}"                                                            << L"\n\n";
+
+}
+
 void BffCompiler_Output(std::wstringstream& wss, const Compiler& compiler)
 {
 	// Compiler
@@ -408,6 +576,12 @@ std::wstring BFFtoOutput(const BffContext& bff)
 
 	// Compiler
 	BffCompiler_Output(wss, bff.compiler);
+
+	// Library
+	for (auto library = bff.libs.cbegin(); library != bff.libs.cend(); ++library)
+	{
+		BffLibrary_Output(wss, *library);
+	}
 
 	// Executable
 	for (auto exe = bff.exes.cbegin(); exe != bff.exes.cend(); ++exe)

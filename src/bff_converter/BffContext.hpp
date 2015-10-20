@@ -20,7 +20,17 @@ struct VSObjectList {
 	std::wstring cmdline;
 };
 
-struct VSLink {
+struct VSLib { // lib.exe
+	std::wstring workingDir;
+	std::wstring cmdline;
+};
+
+struct VSLibrary {
+	std::vector<VSObjectList> objs;
+	VSLib lib;
+};
+
+struct VSLink { // link.exe
 	std::wstring workingDir;
 	std::wstring cmdline;
 };
@@ -34,6 +44,7 @@ struct VSContext {
 	Compiler compiler;
 	Settings settings;
 	std::vector<VSObjectList> lastObjs;
+	std::vector<VSLibrary> libs;
 	std::vector<VSExecutable> exes;
 };
 
@@ -53,6 +64,18 @@ struct BffObjectList {
 	std::vector<std::wstring> compilerInputFiles;
 };
 
+struct BffLib { // lib.exe
+	std::wstring name;
+	std::wstring librarianOptions;
+	std::wstring librarianOutput;
+};
+
+struct BffLibrary {
+	BffObjectPCH pch;
+	BffObjectList obj;
+	BffLib lib;
+};
+
 struct BffLink {
 	std::wstring name;
 	std::wstring linkerOutput;
@@ -69,6 +92,7 @@ struct BffExecutable {
 struct BffContext {
 	Compiler compiler;
 	Settings settings;
+	std::vector<BffLibrary> libs;
 	std::vector<BffExecutable> exes;
 };
 
