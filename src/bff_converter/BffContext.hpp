@@ -58,7 +58,6 @@ struct BffObjectPCH {
 
 struct BffObjectList {
 	std::wstring name;
-	std::wstring compiler;
 	std::wstring compilerOptions;
 	std::wstring compilerOutputPath;
 	std::vector<std::wstring> compilerInputFiles;

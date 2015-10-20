@@ -113,7 +113,7 @@ static BffObjectPCH ObjectPCH_VStoBFF(const VSObjectList& in)
 	return out;
 }
 
-static BffObjectList ObjectList_VStoBFF(const VSObjectList& in, const std::wstring& platform)
+static BffObjectList ObjectList_VStoBFF(const VSObjectList& in)
 {
 	// cl.exe /c /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE
 	// /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t
@@ -122,7 +122,6 @@ static BffObjectList ObjectList_VStoBFF(const VSObjectList& in, const std::wstri
 	// /Gd /TP /analyze- /errorReport:queue ..\..\src\HelloWorld.cpp
 
 	BffObjectList out;
-	out.compiler = L"Compiler-" + platform;
 
 	VSBFF::Parser::StringUtil su;
 	VSBFF::Parser::Tokenizer t(in.cmdline);
@@ -325,14 +324,14 @@ void VStoBFF(const VSContext& vs, BffContext& bff)
 
 		if (it->objs.size() == 1)
 		{
-			library.obj = ObjectList_VStoBFF(it->objs[0], bff.compiler.platform);
+			library.obj = ObjectList_VStoBFF(it->objs[0]);
 			library.obj.name = library.lib.name + L"_0";
 		}
 		else
 		{
 			// PCH
 			library.pch = ObjectPCH_VStoBFF(it->objs[0]);
-			library.obj = ObjectList_VStoBFF(it->objs[1], bff.compiler.platform);
+			library.obj = ObjectList_VStoBFF(it->objs[1]);
 			library.obj.name = library.lib.name + L"_0";
 		}
 
@@ -347,14 +346,14 @@ void VStoBFF(const VSContext& vs, BffContext& bff)
 
 		if (it->objs.size() == 1)
 		{
-			exe.obj = ObjectList_VStoBFF(it->objs[0], bff.compiler.platform);
+			exe.obj = ObjectList_VStoBFF(it->objs[0]);
 			exe.obj.name = exe.link.name + L"_0";
 		}
 		else
 		{
 			// PCH
 			exe.pch = ObjectPCH_VStoBFF(it->objs[0]);
-			exe.obj = ObjectList_VStoBFF(it->objs[1], bff.compiler.platform);
+			exe.obj = ObjectList_VStoBFF(it->objs[1]);
 			exe.obj.name = exe.link.name + L"_0";
 		}
 
@@ -387,8 +386,7 @@ ObjectList('name')
 			<< L"  .PCHOptions = '" << pch.options << L"'"                 << L"\n";
 	}
 
-	wss	<< L"  .Compiler = '" << o.compiler << L"'"                          << L"\n"
-		<< L"  .CompilerOptions = '" << o.compilerOptions << "'"             << L"\n"
+	wss << L"  .CompilerOptions = '" << o.compilerOptions << "'"             << L"\n"
 		<< L"  .CompilerOutputPath = '" << o.compilerOutputPath << "'"       << L"\n"
 		<< L"  .CompilerInputFiles = {"                                      << L"\n";
 		
