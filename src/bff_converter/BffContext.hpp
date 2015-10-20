@@ -6,6 +6,7 @@
 struct Compiler {
 	std::wstring platform;
 	std::wstring vsInstallDir;
+	std::wstring windowsSdkDir;
 };
 
 struct Settings {
@@ -35,15 +36,26 @@ struct VSLink { // link.exe
 	std::wstring cmdline;
 };
 
+struct VSResourceCompile { // rc.exe
+	std::wstring workingDir;
+	std::wstring cmdline;
+
+	bool available() const { return !cmdline.empty(); }
+};
+
 struct VSExecutable {
 	std::vector<VSObjectList> objs;
+	VSResourceCompile rc;
 	VSLink link;
 };
 
 struct VSContext {
 	Compiler compiler;
 	Settings settings;
+
 	std::vector<VSObjectList> lastObjs;
+	VSResourceCompile lastRc;
+
 	std::vector<VSLibrary> libs;
 	std::vector<VSExecutable> exes;
 };
@@ -82,9 +94,19 @@ struct BffLink {
 	std::vector<std::wstring> libraries;
 };
 
+struct BffResourceCompile { // rc.exe
+	std::wstring name;
+	std::wstring compilerOptions;
+	std::wstring compilerOutputPath;
+	std::vector<std::wstring> compilerInputFiles;
+
+	bool available() const { return !compilerInputFiles.empty(); }
+};
+
 struct BffExecutable {
 	BffObjectPCH pch;
 	BffObjectList obj;
+	BffResourceCompile rc;
 	BffLink link;
 };
 

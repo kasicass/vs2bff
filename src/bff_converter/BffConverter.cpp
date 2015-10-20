@@ -26,13 +26,14 @@ std::wstring recvOneMsg(void *s)
 // SystemRoot
 void handleBegin(VSContext &vscontext, void *conv)
 {
-	vscontext.compiler.platform     = recvOneMsg(conv);
-	vscontext.compiler.vsInstallDir = recvOneMsg(conv);
+	vscontext.compiler.platform      = recvOneMsg(conv);
+	vscontext.compiler.vsInstallDir  = recvOneMsg(conv);
+	vscontext.compiler.windowsSdkDir = recvOneMsg(conv);
 	
-	vscontext.settings.PATH         = recvOneMsg(conv);
-	vscontext.settings.INCLUDE      = recvOneMsg(conv);
-	vscontext.settings.LIB          = recvOneMsg(conv);
-	vscontext.settings.SystemRoot   = recvOneMsg(conv);
+	vscontext.settings.PATH          = recvOneMsg(conv);
+	vscontext.settings.INCLUDE       = recvOneMsg(conv);
+	vscontext.settings.LIB           = recvOneMsg(conv);
+	vscontext.settings.SystemRoot    = recvOneMsg(conv);
 }
 
 // cl
@@ -59,8 +60,10 @@ void handleLink(VSContext &vscontext, void *conv)
 	VSExecutable exe;
 	exe.objs = vscontext.lastObjs;
 	exe.link = l;
+	exe.rc   = vscontext.lastRc;
 
 	vscontext.lastObjs.clear();
+	vscontext.lastRc = VSResourceCompile();
 	vscontext.exes.push_back(exe);
 }
 
@@ -79,6 +82,18 @@ void handleLib(VSContext &vscontext, void *conv)
 
 	vscontext.lastObjs.clear();
 	vscontext.libs.push_back(library);
+}
+
+// rc
+// workingDir
+// rc.exe args
+void handleRC(VSContext &vscontext, void *conv)
+{
+	VSResourceCompile rc;
+	rc.workingDir = recvOneMsg(conv);
+	rc.cmdline = recvOneMsg(conv);
+
+	vscontext.lastRc = rc;
 }
 
 // end
@@ -123,6 +138,10 @@ int wmain(int argc, wchar_t *argv[])
 		else if (t[0] == L"lib")
 		{
 			handleLib(vscontext, conv);
+		}
+		else if (t[0] == L"rc")
+		{
+			handleRC(vscontext, conv);
 		}
 		else if (t[0] == L"end")
 		{

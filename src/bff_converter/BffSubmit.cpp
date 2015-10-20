@@ -20,6 +20,10 @@ void sendBegin(void *conv, const std::wstring& platform)
 	if (value) sendWStr(conv, value);
 	else sendWStr(conv, L"none");
 
+	value = _wgetenv(L"WindowsSdkDir");
+	if (value) sendWStr(conv, value);
+	else sendWStr(conv, L"none");
+
 	value = _wgetenv(L"PATH");
 	if (value) sendWStr(conv, value);
 	else sendWStr(conv, L"none");
