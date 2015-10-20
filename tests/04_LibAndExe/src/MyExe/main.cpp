@@ -1,4 +1,5 @@
 #include "MyLib.hpp"
+#include "MyLibPCH.h"
 
 int main()
 {
@@ -6,4 +7,6 @@ int main()
 
 	std::string v = "VVV";
 	printMe(v);
+
+	printMePCH();
 }

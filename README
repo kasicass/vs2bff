@@ -2,12 +2,12 @@ A .sln to .bff(http://www.fastbuild.org/) converter.
 for fun~ :-)
 
 ==== TODO ====
- * .lib support
  * .dll support
  * c# support
  
 ==== DONE ====
 2015.10.20
+ * .lib support
  * multi .exe targets
 
 2015.10.16
