@@ -4,6 +4,20 @@
 #include <sstream>
 #include <unordered_set>
 
+static std::wstring TokenStrip(const std::wstring& token)
+{
+	std::wstring out;
+	if (token[0] == L'"')
+	{ // "..\..\a.txt" => ..\..\a.txt
+		out = token.substr(1, token.length()-2);
+	}
+	else
+	{
+		out = token;
+	}
+	return out;
+}
+
 static std::wstring RelativePathToAbsolutePath(const std::wstring& rpath, const std::wstring& workingDir)
 {
 	if (rpath.length() > 1 && rpath[1] == L':')
@@ -117,7 +131,10 @@ static BffObjectPCH ObjectPCH_VStoBFF(const VSObjectList& in)
 		}
 		else
 		{
-			out.inputFile = RelativePathToAbsolutePath(token, in.workingDir);
+			// ..\src\xx.cpp
+			// "..\src\xx.cpp"
+			std::wstring file = TokenStrip(token);
+			out.inputFile = RelativePathToAbsolutePath(file, in.workingDir);
 		}
 	}
 	out.options += L" %%1";
@@ -183,7 +200,9 @@ static BffObjectList ObjectList_VStoBFF(const VSObjectList& in)
 		}
 		else
 		{
-			out.compilerInputFiles.push_back(RelativePathToAbsolutePath(token, in.workingDir));
+			std::wstring file = TokenStrip(token);
+			file = RelativePathToAbsolutePath(file, in.workingDir);
+			out.compilerInputFiles.push_back(file);
 		}
 	}
 	out.compilerOptions += L" %%1";
@@ -363,7 +382,9 @@ BffResourceCompile VSResourceCompile_To_BffResourceCompile(const VSResourceCompi
 		}
 		else
 		{
-			out.compilerInputFiles.push_back(RelativePathToAbsolutePath(token, in.workingDir));
+			std::wstring file = TokenStrip(token);
+			file = RelativePathToAbsolutePath(file, in.workingDir);
+			out.compilerInputFiles.push_back(file);
 		}
 	}
 
